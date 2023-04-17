@@ -9,8 +9,8 @@ public class GunCylinder : MonoBehaviour
     // Start is called before the first frame update
     void Start()
     {
-        _open = false;
-        _animator = gameObject.GetComponent<Animator>();
+        // _open = false;
+        // _animator = gameObject.GetComponent<Animator>();
     }
 
     // Update is called once per frame

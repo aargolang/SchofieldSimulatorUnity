@@ -35,10 +35,10 @@ public class Gun : MonoBehaviour
         // }
     }
 
-    void _ToggleHammer()
-    {
-        _hammer.ToggleHammer();
-    }
+    // void _ToggleHammer()
+    // {
+    //     _hammer.ToggleHammer();
+    // }
 
     void _ToggleCylinder()
     {
