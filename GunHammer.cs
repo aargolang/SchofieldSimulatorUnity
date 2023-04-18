@@ -4,40 +4,43 @@ using UnityEngine;
 
 public class GunHammer : MonoBehaviour
 {
+    // Static "Constants"
+    static Quaternion _s_rotationPositionCocked = Quaternion.Euler(0f,74.0f,0f);
+    static Quaternion _s_rotationPositionDecocked = Quaternion.Euler(0f,0f,0f);
+    static Quaternion _s_rotationPositionMax = Quaternion.Euler(0f,85.0f,0f);
+    const float _s_rotationSpeedNormal = 1.5f;
+    const float _s_rotationSpeedShoot = 10.0f;
+    const int _s_localHammerFlag = 0x1;
+    const int _s_LMB = 0; // Left Mouse Button
+    const int _s_RMB = 1; // Right Mouse Button
+
+    // Vars
+    [SerializeField]
+    Quaternion _rotationPositionTarget;
+    [SerializeField]
+    Quaternion _rotationPositionCurrentMin;
+    [SerializeField]
+    Quaternion _rotationPositionCurrentMax;
+    [SerializeField]
+    float _rotationSpeedCurrent;
     [SerializeField]
     int _hammerDirectionFlags;
     [SerializeField]
-    static int _localHammerFlag;
-
-    // lerp vars
+    bool _cocked;
     [SerializeField]
-    int _lerpState; // TODO: lerp state needs to have min/max limits sure
-    // [SerializeField] // TODO: do this later if we want to use this to control speed
-    // int _lerpStep;
+    bool _firing;
     [SerializeField]
-    int _interpolationMin;
-    [SerializeField]
-    int _interpolationMax;
-    [SerializeField]
-    float _interpolationCoefficient;
-    [SerializeField]
-    float _interpolationDuration = 0.9f;
-    // Vector3 _cockedPosition = new Vector3(0f,74.2699966f,0f); // TODO: find actual value
-    // Vector3 _decockedPosition = new Vector3(0f,0f,0f); // TOOD: find actual value
-    [SerializeField]
-    Quaternion _cockedPosition = Quaternion.Euler(0f,74.2699966f,0f); // TODO: find actual value
-    [SerializeField]
-    Quaternion _decockedPosition = Quaternion.Euler(0f,0f,0f); // TOOD: find actual value
+    bool _pullingTrigger;
 
     // Start is called before the first frame update
     void Start()
     {
-        transform.localRotation = _decockedPosition;
+        _rotationPositionCurrentMin = _s_rotationPositionDecocked;
+        _rotationPositionCurrentMax = _s_rotationPositionMax;
+        transform.localRotation = _rotationPositionCurrentMin;
+        _rotationPositionTarget = _rotationPositionCurrentMin;
+        _rotationSpeedCurrent = _s_rotationSpeedNormal;
         _hammerDirectionFlags = 0;
-        _localHammerFlag = 0x1;
-
-        _interpolationMax = (int)(1/Time.deltaTime * _interpolationDuration);
-        _interpolationMin = 0;
     }
 
     // Update is called once per frame
@@ -45,73 +48,116 @@ public class GunHammer : MonoBehaviour
     {
         if(Input.GetKeyDown("f"))
         {
-            setHammerDirectionFlag(_localHammerFlag);
+            _hammerPull();
         }
         if(Input.GetKeyUp("f"))
         {
-            clearHammerDirectionFlag(_localHammerFlag);
+            _hammerRelease();
+        }
+        if(Input.GetMouseButtonDown(_s_LMB)) // LMB down
+        {
+            _triggerPull();
+        }
+        if(Input.GetMouseButtonUp(_s_LMB)) // LMB up
+        {
+            _triggerRelease();
         }
 
-        _processLerpState();
+        _processRotateState();
+
+        // Rotate the hammer towards the target
+        transform.localRotation = Quaternion.RotateTowards(
+            transform.localRotation, // From here
+            _rotationPositionTarget, // To here
+            _rotationSpeedCurrent    // This many degrees (up to target position)
+        );
     }
 
-    void _processLerpState()
+    void _triggerPull()
     {
-        if(_hammerDirectionFlags!=0)
-        {
-            _lerpStateAdd();
-        }
-        else
-        {
-            _lerpStateSubtract();
-        }
-
-        // lerpState
-        _interpolationCoefficient = ((float)_lerpState/_interpolationMax);
-        transform.localRotation = Quaternion.Lerp(_decockedPosition, _cockedPosition, _interpolationCoefficient);
+        _pullingTrigger = true;
+        fire();
     }
 
-    void _lerpStateAdd()
+    void _triggerRelease()
     {
-        if(_lerpState != _interpolationMax)
+        _pullingTrigger = false;
+    }
+
+    void _hammerPull()
+    {
+        if(!_firing)
         {
-            _lerpState += 1;
+            setHammerDirectionFlag(_s_localHammerFlag);
+            _rotationPositionTarget = _rotationPositionCurrentMax;
         }
     }
 
-    void _lerpStateSubtract()
+    void _hammerRelease()
     {
-        if(_lerpState != _interpolationMin)
+        clearHammerDirectionFlag(_s_localHammerFlag);
+        if(_hammerDirectionFlags==0)
         {
-            _lerpState -= 1;
+            _rotationPositionTarget = _rotationPositionCurrentMin;
+        }
+    }
+
+    // Process firing the gun
+    public void fire()
+    {
+        // fire
+        if(_cocked && 
+           _hammerDirectionFlags == 0)
+        {
+            _rotationPositionCurrentMin = _s_rotationPositionDecocked;
+            _rotationPositionTarget = _s_rotationPositionDecocked;
+            _firing = true;
+            _rotationSpeedCurrent = _s_rotationSpeedShoot;
+        }
+        _cocked = false;
+    }
+
+    // Process rotation states and rotation for this update
+    void _processRotateState()
+    {
+        // Check if the hammer catch passes the trigger latch, and we aren't pulling the trigger
+        if (!_cocked &&
+            !_pullingTrigger && 
+            transform.localRotation.y > _s_rotationPositionCocked.y)
+        {
+            _rotationPositionCurrentMin = _s_rotationPositionCocked;
+            _cocked = true;
+        }
+
+        // if holding hammer and cocked, set minimum position to decocked
+        // for safely decocking hammer
+        if (_hammerDirectionFlags != 0 &&
+            _pullingTrigger)
+        {
+            _rotationPositionCurrentMin = _s_rotationPositionDecocked;
+        }
+
+        // Check that the hammer has struck the primer (or empty chamber)
+        if (transform.localRotation.y == _s_rotationPositionDecocked.y &&
+            _rotationSpeedCurrent != _s_rotationSpeedNormal)
+        {
+            _rotationSpeedCurrent = _s_rotationSpeedNormal;
+            _firing = false;
+            // TODO: shoot the bullet
         }
     }
 
     // Public Methods
 
-    // clear a hammer direction flag
-    public void clearHammerDirectionFlag(int flag)
-    {
-        // 
-        _hammerDirectionFlags &= ~flag;
-    }
-
     // set a hammer direction flag
     public void setHammerDirectionFlag(int flag)
     {
-        //
         _hammerDirectionFlags |= flag;
     }
 
-    // void _updateLerpStep()
-    // {
-    //     if(_hammerDirectionFlags!=0)
-    //     {
-    //         _lerpStep = 1;
-    //     }
-    //     else
-    //     {
-    //         _lerpStep = -1;
-    //     }
-    // }
+    // clear a hammer direction flag
+    public void clearHammerDirectionFlag(int flag)
+    {
+        _hammerDirectionFlags &= ~flag;
+    }
 }
