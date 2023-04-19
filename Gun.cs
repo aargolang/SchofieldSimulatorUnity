@@ -6,30 +6,69 @@ public class Gun : MonoBehaviour
 {
     // Constants
     static Vector3 _s_positionReady = new Vector3(0.0067f,0.4884f,0.0121f);
-    static Quaternion _s_rotationPositionReady = Quaternion.Euler(0.0f,0.0f,0.0f);
+    static Quaternion _s_rotationReady = Quaternion.Euler(0.0f,0.0f,0.0f);
     static Vector3 _s_positionReload = new Vector3(0.003f,0.48f,0.01f);
-    static Quaternion _s_rotationPositionReload = Quaternion.Euler(-36.7f,0.0f,0.0f);
+    static Quaternion _s_rotationReload = Quaternion.Euler(-36.7f,0.0f,0.0f);
     const float _s_rotationSpeed = 0.8f;
     const float _s_positionSpeed = 0.0001f;
     
+    // Stuct for position rotation combos
+    public struct PosRot
+    {
+        public PosRot(Vector3 position, Quaternion rotation)
+        {
+            pos = position;
+            rot = rotation;
+        }
+
+        public void Set(Vector3 position, Quaternion rotation)
+        {
+            pos = position;
+            rot = rotation;
+        }
+
+        public Vector3 pos;
+        public Quaternion rot;
+    }
+
+    // 'int only' enumeration (no casting needed)
+    public static class State
+    {
+        public const int Ready = 0;
+        public const int Reload = 1;
+    }
+
+    // The array of states we can be in that includes position and rotation
+    PosRot[] _stateArray =
+    {
+        new PosRot(_s_positionReady, _s_rotationReady),   // Ready 
+        new PosRot(_s_positionReload, _s_rotationReload)  // Reload
+    };
 
     // Gun state
     [SerializeField]
-    bool _reloadState; // TODO: change this out for an enumeration of reload, ready, aim, brass check
-    [SerializeField]
-    Vector3 _positionTarget;
-    [SerializeField]
-    Quaternion _positionRotationTarget;
+    int _gunState;
+
+    PosRot _posRotSource;
+    PosRot _posRotTarget;
+
+    // Interpolation values
+    float lerpDuration = 0.9f;
+    float lerpCoeff;
+    int interpolationMin;
+    int interpolationMax;
 
     // Start is called before the first frame update
     void Start()
     {
-        _positionRotationTarget = _s_rotationPositionReady;
-        transform.localRotation = _s_rotationPositionReady;
-        _positionTarget = _s_positionReady;
-        transform.localPosition = _s_positionReady;
-
-        _reloadState = false;
+        _gunState = State.Ready;
+        // set local PosRot
+        transform.localRotation = _stateArray[_gunState].rot;
+        transform.localPosition = _stateArray[_gunState].pos;
+        _posRotSource.rot = _stateArray[_gunState].rot;
+        _posRotSource.pos = _stateArray[_gunState].pos;
+        _posRotTarget.rot = _stateArray[_gunState].rot;
+        _posRotTarget.pos = _stateArray[_gunState].pos;
     }
 
     // Update is called once per frame
@@ -63,31 +102,48 @@ public class Gun : MonoBehaviour
         // {
         //     // TODO: this
         // }
-        transform.localPosition = Vector3.MoveTowards(
-            transform.localPosition,
-            _positionTarget,
-            _s_positionSpeed
-        );
-        transform.localRotation = Quaternion.RotateTowards(
-            transform.localRotation, // From here
-            _positionRotationTarget, // To here
-            _s_rotationSpeed         // This many degrees (up to target position)
-        );
+        // transform.localPosition = Vector3.MoveTowards(
+        //     transform.localPosition,
+        //     _positionTarget,
+        //     _s_positionSpeed
+        // );
+        // transform.localRotation = Quaternion.RotateTowards(
+        //     transform.localRotation, // From here
+        //     _posRotTarget, // To here
+        //     _s_rotationSpeed         // This many degrees (up to target position)
+        // );
     }
 
     // local animation
     void _ToggleReloadState()
     {
-        if (!_reloadState)
+        if (_gunState == State.Reload)
         {
-            _positionRotationTarget = _s_rotationPositionReload;
-            _positionTarget = _s_positionReload;
+            // Set state
+            _gunState = State.Ready;
+
+            // Moving from where we are now
+            _posRotSource.Set(
+                transform.localPosition,
+                transform.localRotation
+            );
+
+            // To ready
+            _posRotTarget = _stateArray[_gunState];
         }
         else
         {
-            _positionRotationTarget = _s_rotationPositionReady;
-            _positionTarget = _s_positionReady;
+            // Set state
+            _gunState = State.Reload;
+
+            // Moving from where we are now
+            _posRotSource.Set(
+                transform.localPosition,
+                transform.localRotation
+            );
+            
+            // To reload
+            _posRotTarget = _stateArray[_gunState];
         }
-        _reloadState = !_reloadState;
     }
 }

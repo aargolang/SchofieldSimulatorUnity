@@ -26,7 +26,7 @@ public class GunCylinder : MonoBehaviour
     {
         if(Input.GetKeyDown("r"))
         {
-            ToggleCylinder();
+            // ToggleCylinder();
         }
         // Rotate the hammer towards the target
         transform.localRotation = Quaternion.RotateTowards(
