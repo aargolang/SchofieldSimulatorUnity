@@ -12,6 +12,15 @@ public class GunCylinder : MonoBehaviour
     // Vars
     bool _open;
     Quaternion _rotationPositionTarget;
+    int _gunState;
+
+    // 'int only' enumeration (no casting needed)
+    public static class State
+    {
+        public const int Ready = 0;
+        public const int Reload = 1;
+        public const int Aim = 2;
+    }
 
     // Start is called before the first frame update
     void Start()
@@ -24,10 +33,10 @@ public class GunCylinder : MonoBehaviour
     // Update is called once per frame
     void Update()
     {
-        if(Input.GetKeyDown("r"))
-        {
-            // ToggleCylinder();
-        }
+        // if(Input.GetKeyDown("r"))
+        // {
+        //     ToggleCylinder();
+        // }
         // Rotate the hammer towards the target
         transform.localRotation = Quaternion.RotateTowards(
             transform.localRotation, // From here
@@ -35,6 +44,31 @@ public class GunCylinder : MonoBehaviour
             _s_rotationSpeed         // This many degrees (up to target position)
         );
     }
+
+    public void updateState(int state)
+    {
+        _gunState = state;
+        if(_gunState == State.Reload)
+        {
+            _rotationPositionTarget = _s_rotationPositionOpen;
+        }
+        else 
+        {
+            _rotationPositionTarget = _s_rotationPositionClosed;
+        }
+    }
+
+    // public void OpenCylinder()
+    // {
+    //     _rotationPositionTarget = _s_rotationPositionOpen;
+    //     _open = true;
+    // }
+
+    // public void CloseCylinder()
+    // {
+    //     _rotationPositionTarget = _s_rotationPositionClosed;
+    //     _open = false;
+    // }
 
     public void ToggleCylinder()
     {
