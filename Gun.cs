@@ -65,7 +65,7 @@ public class Gun : MonoBehaviour
     bool _lerpTransitioning;
 
     // Component variables
-    GunCylinder cylinder; 
+    GunCylinder _cylinder; 
 
     // Start is called before the first frame update
     void Start()
@@ -84,14 +84,12 @@ public class Gun : MonoBehaviour
         // _lerpMin = 0;
         _lerpMax = (int)(1/Time.deltaTime * _lerpDuration);
 
-        cylinder = GameObject.GetC
+        _cylinder = GetComponentInChildren<GunCylinder>();
     }
 
     // Update is called once per frame
     void Update()
     {
-
-
         // if(Input.GetMouseButtonDown(1)) // RMB
         // {
         //     // TODO: this
@@ -191,5 +189,6 @@ public class Gun : MonoBehaviour
             _posRotTarget = _stateArray[_gunState];
         }
         _lerpVal = 0;
+        _cylinder.updateState(_gunState);
     }
 }

@@ -32,6 +32,8 @@ public class GunHammer : MonoBehaviour
     [SerializeField]
     bool _pullingTrigger;
 
+    
+
     // Start is called before the first frame update
     void Start()
     {
@@ -150,14 +152,16 @@ public class GunHammer : MonoBehaviour
     // Public Methods
 
     // set a hammer direction flag
-    public void setHammerDirectionFlag(int flag)
+    public int setHammerDirectionFlag(int flag)
     {
         _hammerDirectionFlags |= flag;
+        return _hammerDirectionFlags;
     }
 
     // clear a hammer direction flag
-    public void clearHammerDirectionFlag(int flag)
+    public int clearHammerDirectionFlag(int flag)
     {
         _hammerDirectionFlags &= ~flag;
+        return _hammerDirectionFlags;
     }
 }
