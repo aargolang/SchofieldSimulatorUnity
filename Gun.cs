@@ -143,10 +143,6 @@ public class Gun : MonoBehaviour
 
         _lerpCoeff = ((float)_lerpVal/_lerpMax);
         _lerpCoeff = anim.Evaluate(_lerpCoeff);
-        if (_lerpCoeff < 0f)
-        {
-            Debug.Log(_lerpCoeff);
-        }
 
         transform.localPosition = Vector3.Lerp(
             _posRotSource.pos,

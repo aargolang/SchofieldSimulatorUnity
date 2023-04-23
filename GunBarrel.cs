@@ -39,6 +39,7 @@ public class GunBarrel : MonoBehaviour
     {
         transform.localRotation = _s_rotationPositionClosed;
         _rotationPositionTarget = _s_rotationPositionClosed;
+        _rotationPositionCurrent = _s_rotationPositionClosed;
         _gunState = Gun.State.Ready;
         _open = false;
         _lerpDuration = 3.0f;
@@ -62,22 +63,19 @@ public class GunBarrel : MonoBehaviour
 
     void _processLerpState()
     {
-        // if (transform.localRotation != _rotationPositionTarget)
-        // {
-        _lerpValAdd();
-
-        _lerpCoeff = ((float)_lerpVal/_lerpMax);
-        // _lerpCoeff = anim.Evaluate(_lerpCoeff);
-        if (_lerpCoeff < 0f)
+        if (transform.localRotation != _rotationPositionTarget)
         {
-            // Debug.Log(_lerpCoeff);
+            _lerpValAdd();
+
+            _lerpCoeff = ((float)_lerpVal/_lerpMax);
+            _lerpCoeff = anim.Evaluate(_lerpCoeff);
+
+            transform.localRotation = Quaternion.Lerp(
+                _rotationPositionCurrent,
+                _rotationPositionTarget,
+                _lerpCoeff
+            );
         }
-        transform.localRotation = Quaternion.Lerp(
-            _rotationPositionCurrent,
-            _rotationPositionTarget,
-            _lerpCoeff
-        );
-        // }
     }
 
     public void updateState(int state)
