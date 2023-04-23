@@ -5,14 +5,19 @@ using UnityEngine;
 public class GunHammer : MonoBehaviour
 {
     // Static "Constants"
+    static Quaternion _s_rotationPositionMax = Quaternion.Euler(0f,85.0f,0f);
+    static Quaternion _s_rotationCylinderStart = Quaternion.Euler(0f,20.0f,0f);
+    static Quaternion _s_rotationCylinderFinish = Quaternion.Euler(0f,72.0f,0f);
     static Quaternion _s_rotationPositionCocked = Quaternion.Euler(0f,74.0f,0f);
     static Quaternion _s_rotationPositionDecocked = Quaternion.Euler(0f,0f,0f);
-    static Quaternion _s_rotationPositionMax = Quaternion.Euler(0f,85.0f,0f);
-    const float _s_rotationSpeedNormal = 1.5f;
+    const float _s_rotationSpeedNormal = 0.9f;
     const float _s_rotationSpeedShoot = 10.0f;
     const int _s_localHammerFlag = 0x1;
     const int _s_LMB = 0; // Left Mouse Button
     const int _s_RMB = 1; // Right Mouse Button
+
+    // References
+    public GunCylinder gunCylinder;
 
     // Vars
     [SerializeField]
@@ -24,6 +29,8 @@ public class GunHammer : MonoBehaviour
     [SerializeField]
     float _rotationSpeedCurrent;
     [SerializeField]
+    float _pawlProgress;
+    [SerializeField]
     int _hammerDirectionFlags;
     [SerializeField]
     bool _cocked;
@@ -32,7 +39,6 @@ public class GunHammer : MonoBehaviour
     [SerializeField]
     bool _pullingTrigger;
 
-    
 
     // Start is called before the first frame update
     void Start()
@@ -73,6 +79,28 @@ public class GunHammer : MonoBehaviour
             _rotationPositionTarget, // To here
             _rotationSpeedCurrent    // This many degrees (up to target position)
         );
+
+        // if not cocked and pulling hammer back, update cylinder on our position
+        // 
+        // 
+        // 
+        // if(!_cocked && _hammerDirectionFlags != 0)
+        // {
+            _pawlProgress = transform.localEulerAngles.y - _s_rotationCylinderStart.y;
+            // Debug.Log(_pawlProgress);
+
+            // if (_pawlProgress > 0f )
+            // {   
+            _pawlProgress = _pawlProgress/52.0f;
+            _pawlProgress = Mathf.Clamp(_pawlProgress, 0.0f, 1.0f);
+            // Debug.Log(_pawlProgress);
+            gunCylinder.pushCylinderRachet(_pawlProgress);
+            // }
+        // }
+        // 
+        // 
+        // 
+        // Debug.Log(transform.localEulerAngles.y);
     }
 
     void _triggerPull()

@@ -12,7 +12,7 @@ public class Gun : MonoBehaviour
     static Vector3 _s_positionAim = new Vector3(-0.0005f,0.49f,0.01f);
     static Quaternion _s_rotationAim = Quaternion.Euler(3.0f,0.0f,0.0f);
     const float _s_positionSpeed = 0.0001f;
-    public float _lerpDuration = 6.0f; 
+    float lerpDuration = 3.0f;
     public AnimationCurve anim;
     
     // Stuct for position rotation combos
@@ -52,7 +52,7 @@ public class Gun : MonoBehaviour
 
     // Gun state
     [SerializeField]
-    int _gunState;
+    public int gunState;
 
     PosRot _posRotSource;
     PosRot _posRotTarget;
@@ -65,26 +65,34 @@ public class Gun : MonoBehaviour
     bool _lerpTransitioning;
 
     // Component variables
-    GunCylinder _cylinder; 
+    GunBarrel _barrel; 
+    GunCylinder _cylinder;
+    GunHammer _hammer;
 
     // Start is called before the first frame update
     void Start()
     {
-        _gunState = State.Ready;
+        gunState = State.Ready;
         // set local PosRot
-        transform.localRotation = _stateArray[_gunState].rot;
-        transform.localPosition = _stateArray[_gunState].pos;
-        _posRotSource.rot = _stateArray[_gunState].rot;
-        _posRotSource.pos = _stateArray[_gunState].pos;
-        _posRotTarget.rot = _stateArray[_gunState].rot;
-        _posRotTarget.pos = _stateArray[_gunState].pos;
+        transform.localRotation = _stateArray[gunState].rot;
+        transform.localPosition = _stateArray[gunState].pos;
+        _posRotSource.rot = _stateArray[gunState].rot;
+        _posRotSource.pos = _stateArray[gunState].pos;
+        _posRotTarget.rot = _stateArray[gunState].rot;
+        _posRotTarget.pos = _stateArray[gunState].pos;
 
         // interpolation
         // _lerpTransitioning = true;
         // _lerpMin = 0;
-        _lerpMax = (int)(1/Time.deltaTime * _lerpDuration);
+        _lerpMax = (int)(1/Time.deltaTime * lerpDuration);
+
+        _barrel = GetComponentInChildren<GunBarrel>();
 
         _cylinder = GetComponentInChildren<GunCylinder>();
+        _cylinder.gunRef = this;
+
+        _hammer = GetComponentInChildren<GunHammer>();
+        _hammer.gunCylinder = _cylinder;
     }
 
     // Update is called once per frame
@@ -135,6 +143,10 @@ public class Gun : MonoBehaviour
 
         _lerpCoeff = ((float)_lerpVal/_lerpMax);
         _lerpCoeff = anim.Evaluate(_lerpCoeff);
+        if (_lerpCoeff < 0f)
+        {
+            Debug.Log(_lerpCoeff);
+        }
 
         transform.localPosition = Vector3.Lerp(
             _posRotSource.pos,
@@ -160,10 +172,10 @@ public class Gun : MonoBehaviour
     // local animation
     void _toggleState(int state)
     {
-        if (_gunState == state)
+        if (gunState == state)
         {
             // Set state
-            _gunState = State.Ready;
+            gunState = State.Ready;
 
             // Moving from where we are now
             _posRotSource.Set(
@@ -172,12 +184,12 @@ public class Gun : MonoBehaviour
             );
 
             // To ready
-            _posRotTarget = _stateArray[_gunState];
+            _posRotTarget = _stateArray[gunState];
         }
         else
         {
             // Set state
-            _gunState = state;
+            gunState = state;
 
             // Moving from where we are now
             _posRotSource.Set(
@@ -186,9 +198,9 @@ public class Gun : MonoBehaviour
             );
             
             // To reload
-            _posRotTarget = _stateArray[_gunState];
+            _posRotTarget = _stateArray[gunState];
         }
         _lerpVal = 0;
-        _cylinder.updateState(_gunState);
+        _barrel.updateState(gunState);
     }
 }
